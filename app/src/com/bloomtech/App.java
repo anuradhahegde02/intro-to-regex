@@ -29,31 +29,70 @@ public class App {
 
     public List<String> splitLines(String rawHeadings) {
         // TODO: implement
-        return null;
+        String[] lines = rawHeadings.split("\\n");
+        return Arrays.asList(lines);
     }
 
     public List<String> filterHeadingsFromLines(List<String> lines) {
-        // TODO: implement
-        return null;
+        String directionRegex = "[NESW]{1,2}";
+        String timeRegex = "\\d+\\.\\d+min";
+        String speedRefex = "\\d+\\.\\d+knots";
+        Pattern directionPattern = Pattern.compile(directionRegex);
+        Pattern timePattern = Pattern.compile(timeRegex);
+        Pattern speedPatern = Pattern.compile(speedRefex);
+        List<String> output = new ArrayList<>();
+        for (String line : lines) {
+            Matcher directionMatcher = directionPattern.matcher(line);
+            Matcher timeMatcher = timePattern.matcher(line);
+            Matcher speedMatcher = speedPatern.matcher(line);
+            if (directionMatcher.find() && timeMatcher.find() && speedMatcher.find()) {
+                output.add(line);
+            }
+        }
+        return output;
     }
 
     public Heading buildHeadingFromHeadingString(String headingString) {
         // TODO: implement
-        return null;
+        String headingRedexWithGroups = "([NESW]{1,2})\\s(\\d+\\.\\d+)min\\s(\\d+\\.\\d+)knots";
+        Pattern p = Pattern.compile(headingRedexWithGroups);
+        Matcher m = p.matcher(headingString);
+        if (m.matches()) {
+            String dir = m.group(1);
+            Float time = Float.parseFloat(m.group(2));
+            Float speed = Float.parseFloat(m.group(3));
+            return new Heading(dir, time, speed);
+        } else {
+            throw new RuntimeException("Unable to extract data from heading string - " + headingString);
+        }
     }
 
     public List<Heading> getHeadingsFromHeadingStrings(List<String> headingStrings) {
-        // TODO: implement
-        return null;
+
+        List<Heading> listOfHeadings = new ArrayList<>();
+        for (String h : headingStrings) {
+            listOfHeadings.add(buildHeadingFromHeadingString(h));
+        }
+
+        return listOfHeadings;
     }
 
     public float computeTotalDistanceTraveledInMiles(List<Heading> headings) {
-        // TODO: implement
-        return 0.0f;
+        float totalDistanceTravelled = 0.0f;
+        for (Heading h : headings) {
+            totalDistanceTravelled += h.getTime() * h.getSpeedInKnots();
+        }
+        return totalDistanceTravelled * KNOT_TO_MPH_CONVERSION_FACTOR;
     }
 
     public static void main(String[] args) {
         App app = new App();
-        // TODO: compose all functions as required to compute total distance traveled in miles
+        String rawText = app.getRawTextFromFile("headings.txt");
+        List<String> lines = app.splitLines(rawText);
+        List<String> headingStrings = app.filterHeadingsFromLines(lines);
+        List<Heading> headings = app.getHeadingsFromHeadingStrings(headingStrings);
+        System.out.println("Total distance travelled = "+app.computeTotalDistanceTraveledInMiles(headings));
+
+
     }
 }
